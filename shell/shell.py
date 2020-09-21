@@ -3,9 +3,9 @@
 import sys, os, re
 
 def exec_cmd(args):
-    if ">" in args:
+    if '>' in args:
         output_redir(args)
-    elif "<" in args:
+    elif '<' in args:
         input_redir(args)
 
     elif "/" in args[0]:
@@ -83,37 +83,41 @@ def pipe_cmd(args):
         os.write(2, ("Could not execute").encode())
         sys.exit(1)
 
-def commands(command):
-    if command[0].lower == 'exit':
+def commands(args):
+    if args[0].lower == "exit":
         sys.exit()
 
-    elif command[0] == 'cd':
+    elif args[0] == "cd":
         try:
-            if len(command) == 2:
-                os.chdir(command[1])
+            if len(args) == 2:
+                os.chdir(args[1])
         except FileNotFoundError:
-            os.write(2, ("The directory " + command[1] + " does not exist.").encode())
+            os.write(2, ("The directory " + args[1] + " does not exist.").encode())
         except:
             os.write(2, ("Invalid directory").encode())
 
-    elif "|" in command:
-        pipe_cmd(command)
+    elif "|" in args:
+        pipe_cmd(args)
         pass
     else:
         pid = os.getpid()
         rc = os.fork()
+        wait = True
 
+        if "&" in args:
+            args.remove("&")
+            wait = False
         if rc < 0:
             os.write(2, ("fork failed, returning %d\n" % rc).encode())
             sys.exit(1)
         elif rc == 0:
-            exec_cmd(command)
+            exec_cmd(args)
             sys.exit(0)
         else:
-            if "&" not in command:
-                val = os.wait()
-                if val[1] != 0 and val[1] != 256:
-                    os.write(1, ("Program terminated with exit code: %d\n" % val[1]).encode())
+            if wait:
+                result = os.wait()
+                if result[1] != 0 and result[1] != 256:
+                    os.write(2, ("Program terminated with exit code: %d\n" % result[1]).encode())
 
 def main():
     while 1:
@@ -132,7 +136,6 @@ def main():
                 if len(line.split()) > 0:
                     commands(line.split())
          break
-
 
 if __name__ == "__main__":
  main()
