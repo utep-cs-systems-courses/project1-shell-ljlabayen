@@ -29,7 +29,7 @@ def exec_cmd(args):
 def output_redir(args):
     i = args.index('>')
     os.close(1)  # close fd1
-    os.open(args[i+1], os.O_CREAT | os.O_WRONLY); # open file for write
+    os.open(args[i+1], os.O_CREAT | os.O_WRONLY) # open file for write
     os.set_inheritable(1, True)
     args.remove(args[i + 1])
     args.remove('>')
@@ -38,7 +38,7 @@ def output_redir(args):
 def input_redir(args):
     i = args.index('<')
     os.close(0) # close fd0
-    os.open(args[i + 1], os.O_RDONLY); # open file for read
+    os.open(args[i + 1], os.O_RDONLY) # open file for read
     os.set_inheritable(0, True)
     args.remove(args[i + 1])
     args.remove('<')
@@ -84,7 +84,7 @@ def pipe_cmd(args):
         sys.exit(1)
 
 def commands(command):
-    if command[0] == 'exit':
+    if command[0].lower == 'exit':
         sys.exit()
 
     elif command[0] == 'cd':
@@ -94,7 +94,7 @@ def commands(command):
         except FileNotFoundError:
             os.write(2, ("The directory " + command[1] + " does not exist.").encode())
         except:
-            os.write(2, ("Please enter a valid directory").encode())
+            os.write(2, ("Invalid directory").encode())
 
     elif "|" in command:
         pipe_cmd(command)
@@ -106,10 +106,10 @@ def commands(command):
         if rc < 0:
             os.write(2, ("fork failed, returning %d\n" % rc).encode())
             sys.exit(1)
-        elif rc == 0:  # child
+        elif rc == 0:
             exec_cmd(command)
             sys.exit(0)
-        else:  # parent (forked ok)
+        else:
             if "&" not in command:
                 val = os.wait()
                 if val[1] != 0 and val[1] != 256:
@@ -122,15 +122,17 @@ def main():
              prompt = os.environ['PS1']
 
          os.write(1, prompt.encode())
-         args = os.read(0, 10000)
+         input = os.read(0, 10000)
 
-         if len(args) == 0:
-             break
-         args = args.decode().split("\n") # separate commands
-         if not args:
-             continue
-         for arg in args:
-             commands(arg.split())
+         lines = re.split(b"\n", input) # separate commands on new line
+
+         if lines:
+             for line in lines:
+                line = line.decode()
+                if len(line.split()) > 0:
+                    commands(line.split())
+         break
+
 
 if __name__ == "__main__":
  main()
