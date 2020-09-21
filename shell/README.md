@@ -6,8 +6,8 @@ Usage:
 
 * **exit**: exit from shell
 * **cd**: change directory
-* **cd ..**: move up directory
 * **ls**: list files and directories
 * **>** : output redirection
 * **<**: input redirection
-* **|**: pipe (not fully working)
+* **|**: pipe
+* **&**: background tasks
