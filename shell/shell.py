@@ -3,27 +3,29 @@
 import sys, os, re
 
 def exec_cmd(args):
+    if ">" in args:
+        output_redir(args)
+    elif "<" in args:
+        input_redir(args)
 
-    pid = os.getpid()
-    rc = os.fork()
-
-    if rc < 0:
-     os.write(2, ("fork failed, returning %d\n" % rc).encode())
-     sys.exit(1)
-
-    elif rc == 0:
-     for dir in re.split(":", os.environ['PATH']):
-         program = "%s/%s" % (dir, args[0])
-         try:
-             os.execve(program, args, os.environ)
-         except FileNotFoundError:
-             pass
-
-     os.write(1, ("%s: Command Not Found!\n" % args[0]).encode())
-     sys.exit(1)
+    elif "/" in args[0]:
+        try:
+            os.execve(args[0], args, os.environ)
+        except FileNotFoundError:
+            pass
 
     else:
-     childpid = os.wait()
+        for dir in re.split(":", os.environ["PATH"]):
+            program = "%s/%s" % (dir, args[0])
+            try:
+                os.execve(program, args, os.environ)
+            except FileNotFoundError:
+                pass
+
+    os.write(2, ("command %s not found \n" % (args[0])).encode())
+    sys.exit(1)
+
+
 def output_redir(args):
     i = args.index('>')
     os.close(1)  # close fd1
@@ -35,7 +37,7 @@ def output_redir(args):
 
 def input_redir(args):
     i = args.index('<')
-    os.close(0)
+    os.close(0) # close fd0
     os.open(args[i + 1], os.O_RDONLY); # open file for read
     os.set_inheritable(0, True)
     args.remove(args[i + 1])
